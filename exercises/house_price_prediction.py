@@ -1,12 +1,14 @@
 from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
 
+import matplotlib.pyplot as plt
 from typing import NoReturn
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
+
 pio.templates.default = "simple_white"
 
 
@@ -23,7 +25,11 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    raise NotImplementedError()
+    X = pd.read_csv(filename).dropna()
+    Y = X['price']
+    X['renovated'] = X['yr_renovated'] != 0
+    del X['price'], X['id'], X['date'], X['yr_renovated'], X['zipcode']
+    return X, Y
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
@@ -43,19 +49,24 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     output_path: str (default ".")
         Path to folder in which plots are saved
     """
-    raise NotImplementedError()
+    for column in X.columns:
+        p = X[column].cov(y) / (np.std(X[column]) * np.std(y))
+        plt.scatter(X[column], y)
+        plt.title("{} vs. Price. Pearson Corr.: {}.".format(X[column].name, p))
+        plt.savefig('{}/{}.png'.format(output_path, X[column].name))
+        plt.close()
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    raise NotImplementedError()
+    X, Y = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
-    raise NotImplementedError()
+    feature_evaluation(X, Y, "./folder")
 
     # Question 3 - Split samples into training- and testing sets.
-    raise NotImplementedError()
+    x_train, y_train, x_test, y_test = split_train_test(X, Y)
 
     # Question 4 - Fit model over increasing percentages of the overall training data
     # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
@@ -64,4 +75,21 @@ if __name__ == '__main__':
     #   3) Test fitted model over test set
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
-    raise NotImplementedError()
+
+    percentages = np.linspace(0.1, 1, 91)
+    averages = []
+    stds = []
+    for percentage in percentages:
+        res_list = []
+        for i in range(10):
+            percentage = percentage.round(5)
+            x_tmp, y_tmp, _, _ = split_train_test(x_train, y_train, train_proportion=percentage)
+            lin_reg = LinearRegression(include_intercept=False)
+            lin_reg.fit(x_tmp.to_numpy(), y_tmp.to_numpy())
+            l = lin_reg.loss(x_test.to_numpy(), y_test.to_numpy())
+            res_list.append(l)
+        averages.append(np.average(res_list))
+        stds.append(np.std(res_list))
+    plt.plot(percentages, averages)
+    plt.errorbar(percentages, averages, yerr=stds)
+    plt.show()
