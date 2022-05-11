@@ -1,10 +1,9 @@
 from math import atan2, pi
 
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
-import numpy as np
 from typing import Tuple
+from utils import *
 import plotly.graph_objects as go
-import plotly.io as pio
 from plotly.subplots import make_subplots
 from matplotlib import pyplot as plt
 
@@ -12,6 +11,7 @@ from IMLearn.metrics import accuracy
 
 pio.templates.default = "simple_white"
 import pandas as pd
+from math import atan2, pi
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -33,7 +33,8 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
         Class vector specifying for each sample its class
 
     """
-    raise NotImplementedError()
+    data = np.load(filename)
+    return data[:, :2], data[:, 2].astype(int)
 
 
 def run_perceptron():
@@ -55,7 +56,6 @@ def run_perceptron():
         # Fit Perceptron and record loss in each fit iteration
         p = Perceptron(callback=callback)
         p.fit(X, Y)
-
         # Plot figure
         plt.plot(p.training_loss_)
         plt.title(n)
@@ -73,6 +73,31 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
         Center of ellipse
     cov: ndarray of shape (2,2)
         Covariance of Gaussian
+    Returns
+    -------
+        scatter: A plotly trace object of the ellipse
+    """
+    l1, l2 = tuple(np.linalg.eigvalsh(cov)[::-1])
+    theta = atan2(l1 - cov[0, 0], cov[0, 1]) if cov[0, 1] != 0 else (np.pi / 2 if cov[0, 0] < cov[1, 1] else 0)
+    t = np.linspace(0, 2 * pi, 100)
+    xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
+    ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
+
+    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+
+
+def get_ellipse(mu: np.ndarray, cov: np.ndarray):
+    """
+    Draw an ellipse centered at given location and according to specified covariance matrix
+
+    Parameters
+    ----------
+    mu : ndarray of shape (2,)
+        Center of ellipse
+
+    cov: ndarray of shape (2,2)
+        Covariance of Gaussian
+
     Returns
     -------
         scatter: A plotly trace object of the ellipse
