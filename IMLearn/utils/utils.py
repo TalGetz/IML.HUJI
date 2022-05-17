@@ -37,9 +37,9 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .7
     X['y_response_data'] = y
     msk = np.random.rand(len(X)) < train_proportion
 
-    train_X = X[msk].astype(int)
+    train_X = X[msk]
     del train_X['y_response_data']
-    test_X = X[~msk].astype(int)
+    test_X = X[~msk]
     del test_X['y_response_data']
 
     train_Y = X[msk]['y_response_data']
