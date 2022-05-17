@@ -1,5 +1,5 @@
 import numpy as np
-from ...base import BaseEstimator
+from IMLearn.base import BaseEstimator
 from typing import Callable, NoReturn
 
 
@@ -48,7 +48,14 @@ class AdaBoost(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.D_ = np.ones(y.shape[0]) / y.shape[0]
+        self.models_ = []
+
+        for i in range(self.iterations_):
+            model = self.wl_()
+            model.fit(X, y)
+            epsilon =
+            self.models_.append(first_model)
 
     def _predict(self, X):
         """
@@ -102,7 +109,8 @@ class AdaBoost(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        arrays = self.weights_[range(T)]*[model.predict(X) for model in self.models_[range(T)]]
+        return np.sign(np.sum(arrays))
 
     def partial_loss(self, X: np.ndarray, y: np.ndarray, T: int) -> float:
         """
