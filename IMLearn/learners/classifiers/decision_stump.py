@@ -43,7 +43,7 @@ class DecisionStump(BaseEstimator):
             Responses of input data to fit to
         """
         best_stats = None
-        best_err = 1
+        best_err = np.inf
         for sign in [1, -1]:
             for j in range(X.shape[1]):
                 thr, thr_err = self._find_threshold(X[:, j], y, sign)
@@ -104,15 +104,17 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        values = thresholds = sorted(values)
+        zipped = sorted(zip(values, labels), reverse=True)
+        values, labels = [x[0] for x in zipped], [x[1] for x in zipped]
+        thresholds = values
         best_threshold = thresholds[0]
         response = ((values >= thresholds[0]) - 0.5) * 2 * sign
-        err = best_err = misclassification_error(response, labels)
+        err = best_err = np.sum([abs(y_p) for y_t, y_p in zip(response, labels) if y_t != my_sign(y_p)])
         for i, threshold in enumerate(thresholds):
             if i == 0:
                 continue
             response[i] = sign
-            err += ((int(labels[i] == sign) - 0.5) * 2) * (1 / labels.shape[0])
+            err -= ((int(my_sign(labels[i]) == sign) - 0.5) * 2) * abs(labels[i])
             if best_err >= err:
                 best_threshold = threshold
                 best_err = err
@@ -136,3 +138,7 @@ class DecisionStump(BaseEstimator):
             Performance under missclassification loss function
         """
         return misclassification_error(self.predict(X), y)
+
+
+def my_sign(x):
+    return np.sign(x) if x != 0 else 1
