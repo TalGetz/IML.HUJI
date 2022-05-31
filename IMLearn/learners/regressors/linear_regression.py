@@ -51,7 +51,7 @@ class LinearRegression(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
         if self.include_intercept_:
-            x = np.append(X, np.ones(X.shape[1]))
+            x = np.append(np.ones((X.shape[0], 1)), X, axis=1)
         else:
             x = X
         self.coefs_ = np.linalg.pinv(x).dot(y)
@@ -71,7 +71,7 @@ class LinearRegression(BaseEstimator):
             Predicted responses of given samples
         """
         if self.include_intercept_:
-            return np.append(X, np.ones(X.shape[1])).dot(self.coefs_)
+            return np.append(np.ones((X.shape[0],1)), X, axis=1).dot(self.coefs_)
         else:
             return X.dot(self.coefs_)
 
